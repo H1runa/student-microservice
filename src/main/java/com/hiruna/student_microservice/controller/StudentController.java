@@ -47,4 +47,10 @@ public class StudentController {
     public Optional<Student> getStudentById(@PathVariable Integer id){
         return stdService.getStudentById(id);
     }
+
+    @DeleteMapping(path = "/students/{id}/delete")
+    public ResponseEntity<Boolean> deleteStudent(@PathVariable int id){
+        stdService.deleteStudent(id);
+        return ResponseEntity.ok(true);
+    }
 }

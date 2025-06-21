@@ -3,6 +3,9 @@ package com.hiruna.student_microservice.service;
 import com.hiruna.student_microservice.data.StudentInterface;
 import com.hiruna.student_microservice.data.Student;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +21,10 @@ public class StudentService {
     private KafkaTemplate<String, Student> StudentKafkaTemplate;
 
     public Student createStudent(Student std){
-        return stdRepo.save(std);
+        Student temp_std =  stdRepo.save(std);
+        StudentKafkaTemplate.send("student-events", "StudentCreated", temp_std);
+
+        return temp_std;
     }
 
     public List<Student> getAllStudents(){
@@ -26,7 +32,10 @@ public class StudentService {
     }
 
     public Student updateStudent(Student std){
-        return stdRepo.save(std);
+        Student temp_std = stdRepo.save(std);
+        StudentKafkaTemplate.send("student-events", "StudentUpdated",temp_std);
+
+        return temp_std;
     }
 
     public List<Student> getStudentsByName(String name){
@@ -45,5 +54,14 @@ public class StudentService {
         }
 
         return std;
+    }
+
+    public void deleteStudent(int id){
+        Optional<Student> std = stdRepo.findById(id);
+        if (std.isPresent()){
+            stdRepo.delete(std.get());
+            StudentKafkaTemplate.send("student-events", "StudentDeleted", std.get());
+        }
+
     }
 }
