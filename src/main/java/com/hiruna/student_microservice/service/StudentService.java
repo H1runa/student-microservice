@@ -3,6 +3,7 @@ package com.hiruna.student_microservice.service;
 import com.hiruna.student_microservice.data.StudentInterface;
 import com.hiruna.student_microservice.data.Student;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,6 +13,9 @@ import java.util.Optional;
 public class StudentService {
     @Autowired
     private StudentInterface stdRepo;
+
+    @Autowired
+    private KafkaTemplate<String, Student> StudentKafkaTemplate;
 
     public Student createStudent(Student std){
         return stdRepo.save(std);
@@ -34,6 +38,12 @@ public class StudentService {
     }
 
     public Optional<Student> getStudentById(int id){
-        return stdRepo.findById(id);
+        Optional<Student> std =  stdRepo.findById(id);
+
+        if (std.isPresent()){
+            StudentKafkaTemplate.send("student-events", "StudentRetrieved", std.get());
+        }
+
+        return std;
     }
 }
